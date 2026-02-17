@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" xlmns:th="http://www.thymeleaf.org" xmlns:xlmns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+<style>
+    body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        background-color: #f4f4f4; /* Цвет фона */
+        font-family: 'Arial', sans-serif; /* Шрифт */
+    }
+
+    form {
+        width: 70%; /* Увеличьте ширину формы */
+        max-width: 600px; /* Максимальная ширина формы */
+        padding: 20px;
+        background-color: #fff; /* Цвет фона формы */
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень формы */
+    }
+
+    div {
+        margin-bottom: 15px;
+    }
+
+    label {
+        margin-right: 15px;
+    }
+
+    button {
+        padding: 10px;
+        background-color: #007bff; /* Цвет кнопки */
+        color: #fff; /* Цвет текста на кнопке */
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background-color: #0056b3; /* Цвет кнопки при наведении */
+    }
+</style>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+<p id="message" style="display: none">      </p>
+<p id="level" style="display: none">    </p>
+<a th:href="@{/nav}" id="a" style="display: none">
+    <button id="b" style="display: none">return to menu</button>
+</a>
+<form id="quizForm">
+    <div th:each="question, iterStat : ${questions}">
+        <div>
+            <p th:text="${iterStat.count + '. ' + question.question}"></p>
+            <div>
+                <label>
+                    <input type="radio" th:name="${question.getId()}" th:value="1"/>
+                    <span th:text="${question.option1}"></span>
+                </label>
+
+                <label>
+                    <input type="radio" th:name="${question.getId()}" th:value="2"/>
+                    <span th:text="${question.option2}"></span>
+                </label>
+            </div>
+
+            <div>
+                <label>
+                    <input type="radio" th:name="${question.getId()}" th:value="3"/>
+                    <span th:text="${question.option3}"></span>
+                </label>
+
+                <label>
+                    <input type="radio" th:name="${question.getId()}" th:value="4"/>
+                    <span th:text="${question.option4}"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+    <button type="button" onclick="checkLevel()">Отправить ответы</button>
+</form>
+
+<div id="myModal" class="modal" style="display: none">
+    <div class="modal-content">
+        <p id="resultText"></p>
+            <button type="button" onclick="closeModal()">return to menu</button>
+    </div>
+</div>
+
+
+<!--<input type="submit" value="check" onclick="checkLevel()">-->
+
+
+<script>
+
+   const inputString = "[[${questions}]]";
+
+   const digitArray = inputString.match(/\d/g);
+
+   const outputArray = digitArray.map(digit => parseInt(digit, 10));
+
+   console.log(outputArray);
+
+   let sum = 0;
+   function checkLevel() {
+       const radioButtons = document.querySelectorAll('input[type="radio"]:checked');
+       console.log(radioButtons)
+
+       const checkedValues = [];
+
+       for (const radioButton of radioButtons) {
+           if (radioButton.checked) {
+               checkedValues.push(radioButton.value);
+           }
+       }
+       let correct = 0;
+       for (let i = 0; i < outputArray.length; i++) {
+           if(checkedValues[i] == outputArray[i]) {
+               correct++;
+           }
+       }
+       sum = correct;
+       document.getElementById('resultText').innerHTML = 'Количество правильных ответов: ' + correct;
+       openModal();
+   }
+   function openModal() {
+       document.getElementById('myModal').style.display = 'block';
+   }
+
+   function closeModal(){
+       fetch('/nav/menu', {
+           method: 'POST',
+           headers: {
+               'Content-Type': 'application/json',
+           },
+           body: JSON.stringify({ sum: sum}),
+       })
+           .then(response => response.json())
+           .then(data => {
+               // Обрабатываем полученные данные
+               document.getElementById("message").innerHTML = data.message;
+               document.getElementById("message").style.display = 'block';
+               document.getElementById("a").style.display = 'block';
+               document.getElementById("level").innerHTML = "Текущий уровень: " + data.level;
+               document.getElementById("level").style.display = 'block';
+               document.getElementById("b").style.display = 'block';
+           })
+           .catch(error => {
+               console.error('Ошибка:', error);
+           });
+       document.getElementById("quizForm").style.display = 'none';
+       document.getElementById("myModal").style.display = 'none';
+       // console.log("qewadwa")
+   }
+
+</script>
+</body>
+</html>
